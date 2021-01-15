@@ -363,18 +363,21 @@ var delay = (function(){
         //Note flags
         flags : {
             blocked         : false,                //If true, the note cannot be edited
-            minimized       : false,                //true = Collapsed note / false = maximixed
+            minimized       : false,                //true = Collapsed note / false = maximized
             expand          : false,                //true = Expanded note / false = normal
             fixed           : false,                //Set position fixed
             highlight       : false,                //Higlight note
             hidden          : false,                //Hidden note
+            hiddenAttached  : false,                //Hidden note if not found element to attach
         },
         //Attach the note to al html element
         attachedTo : {
             element         : '',                   //Where to attach (string or object / '#idObject' or $('#idObject'))
-            position        : 'right',              //Position relative to elemente : top,right,bottom,left or combinations (top left, right bottom, ...)
+            position        : 'right',              //Position relative to element : top,right,bottom,left or combinations (top left, right bottom, ...)
             fixed           : true,                 //Fix note to element when resize screen
             arrow           : true,                 //Show an arrow in the inverse position
+            minimizeFixed   : false,                //Minimize note near the element
+            hide            : false,                //Do not show note if target element not found in DOM
         },
         //Meta data
         meta: {
@@ -1083,9 +1086,21 @@ var delay = (function(){
                 //String object
                 if(typeof data.attachedTo.element === 'string' && data.attachedTo.element !== "") {
                     if($(''+data.attachedTo.element).length > 0) {
-                        objToAttach = $(''+data.attachedTo.element).first();
+                      objToAttach = $(''+data.attachedTo.element);
+                      if (data.attachedTo.element.indexOf(':contains') >= 0) {
+                        objToAttach = objToAttach.last();
+                      }
+                      else {
+                        objToAttach = objToAttach.first();
+                      }
                     } else {
                         console.log('Object to attach not found in DOM.');
+                        //Hide note and mark it as missing attachTo element in DOM.
+                        if (data.attachedTo.hide) {
+                            data.flags.hiddenAttached = true;
+                            t.saveOptions(data);
+                            setTimeout(function () { t.hide(id); }, 0);
+                        }
                         return;
                     }
                 } else {
@@ -2007,10 +2022,16 @@ var delay = (function(){
                 $('#pia_editable_'+index).hide();
                 $('#pia_minimize_'+index).removeClass(options.cssclases.icons.minimize).addClass(options.cssclases.icons.maximize);
                 options.flags.minimized = true;
+
                 //Add some start text to minimized note
                 var txtContent = " " + $('#pia_editable_'+index).text();
-                if(txtContent.length > 18)
-                    txtContent = txtContent.substring(0,15) + "...";
+                if (options.attachedTo.element !== undefined && options.attachedTo.element !== '' && options.attachedTo.minimizeFixed) {
+                   txtContent = '';
+                }
+
+                if(txtContent.length > 18) {
+                    txtContent = txtContent.substring(0, 15) + "...";
+                }
                 var smallText = $('<div id="pia_minimized_text_'+index+'" class="PIAminimizedText" />').text(txtContent);
                 $('#pia_toolbar_'+index).append(smallText);
                 $('#pia_minimize_'+index).attr('title', 'Restore note');
@@ -2028,18 +2049,31 @@ var delay = (function(){
                 t.saveOldPosition();
                 //Minimize
                 var hideNote = function() {
-                    $($.fn.postitall.globals.prefix + index).animate({
-                        'width': (options.minWidth + 20),
-                        'height': '20px',
-                        'bottom': '0',
-                        'left': options.oldPosition.leftMinimized,
-                    }, 500, function() {
-                        t.hideArrow(index, options);
-                        t.switchTrasparentNoteOn();
-                        $($.fn.postitall.globals.prefix + index).css({position:'fixed'})
-                    }).css({
-                        'top': 'auto',
-                    });
+                    if (options.attachedTo.minimizeFixed) {
+                        $($.fn.postitall.globals.prefix + index).animate({
+                            'width': '12px',
+                            'height': '20px',
+                            'left': options.oldPosition.leftMinimized,
+                        }, 500, function() {
+                            t.hideArrow(index, options);
+                            t.switchTrasparentNoteOn();
+                            $($.fn.postitall.globals.prefix + index).css({position:'fixed'})
+                        }).addClass('minimizedAttached');
+                    }
+                    else {
+                      $($.fn.postitall.globals.prefix + index).animate({
+                          'width': (options.minWidth + 20),
+                          'height': '20px',
+                          'bottom': '0',
+                          'left': options.oldPosition.leftMinimized,
+                      }, 500, function() {
+                          t.hideArrow(index, options);
+                          t.switchTrasparentNoteOn();
+                          $($.fn.postitall.globals.prefix + index).css({position:'fixed'})
+                      }).css({
+                          'top': 'auto',
+                      });
+                    }
                 };
 
                 $($.fn.postitall.globals.prefix + index).css({
@@ -2070,6 +2104,7 @@ var delay = (function(){
                         if ($.ui) obj.draggable({ axis: "none" });
                     }
                     t.switchTrasparentNoteOff();
+                    $($.fn.postitall.globals.prefix + index).removeClass('minimizedAttached');
                 });
             };
             //Action
@@ -3132,7 +3167,13 @@ var delay = (function(){
             //Postit minimized?
             if($.fn.postitall.globals.minimized && options.features.minimized && options.flags.minimized) {
                 options.flags.minimized = false;
-                $('#pia_minimize_' + options.id).click();
+                var delay_val = 0;
+                //Set delay for hiding to let attach to element first.
+                if (options.attachedTo.minimizeFixed) {
+                  t.attachedTo();
+                  delay_val = 600;
+                }
+                setTimeout(function () { $('#pia_minimize_' + options.id).click(); }, delay_val);
             }
 
             //Select arrow in front
@@ -3161,8 +3202,15 @@ var delay = (function(){
             }
 
             //Change hidden state if note is higlighted
-            if(options.flags.highlight)
+            if(options.flags.highlight) {
                 options.flags.hidden = false;
+            }
+
+            //Change hidden state if note was hidden because of missing attached element
+            if(options.flags.hiddenAttached) {
+                options.flags.hidden = false;
+                options.flags.hiddenAttached = false;
+            }
 
             //Show postit
             if(!options.flags.hidden) {
