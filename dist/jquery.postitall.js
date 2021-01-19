@@ -2057,23 +2057,24 @@ var delay = (function(){
                         }, 500, function() {
                             t.hideArrow(index, options);
                             t.switchTrasparentNoteOn();
-                            $($.fn.postitall.globals.prefix + index).css({position:'fixed'})
-                        }).addClass('minimizedAttached');
+                        }).addClass('minimizedAttached')
+                          .css({position:'absolute'});
                     }
                     else {
-                      $($.fn.postitall.globals.prefix + index).animate({
-                          'width': (options.minWidth + 20),
-                          'height': '20px',
-                          'bottom': '0',
-                          'left': options.oldPosition.leftMinimized,
-                      }, 500, function() {
-                          t.hideArrow(index, options);
-                          t.switchTrasparentNoteOn();
-                          $($.fn.postitall.globals.prefix + index).css({position:'fixed'})
-                      }).css({
-                          'top': 'auto',
-                      });
+                        $($.fn.postitall.globals.prefix + index).animate({
+                            'width': (options.minWidth + 20),
+                            'height': '20px',
+                            'bottom': '0',
+                            'left': options.oldPosition.leftMinimized,
+                        }, 500, function() {
+                            t.hideArrow(index, options);
+                            t.switchTrasparentNoteOn();
+                            $($.fn.postitall.globals.prefix + index).css({position:'fixed'})
+                        }).css({
+                            'top': 'auto',
+                        });
                     }
+                    $($.fn.postitall.globals.prefix + index).addClass('PIAminimized');
                 };
 
                 $($.fn.postitall.globals.prefix + index).css({
@@ -2104,7 +2105,7 @@ var delay = (function(){
                         if ($.ui) obj.draggable({ axis: "none" });
                     }
                     t.switchTrasparentNoteOff();
-                    $($.fn.postitall.globals.prefix + index).removeClass('minimizedAttached');
+                    $($.fn.postitall.globals.prefix + index).removeClass('PIAminimized minimizedAttached');
                 });
             };
             //Action
@@ -3169,9 +3170,9 @@ var delay = (function(){
                 options.flags.minimized = false;
                 var delay_val = 0;
                 //Set delay for hiding to let attach to element first.
-                if (options.attachedTo.minimizeFixed) {
-                  t.attachedTo();
-                  delay_val = 600;
+                if (options.attachedTo.element !== '') {
+                    t.attachedTo();
+                    delay_val = 800;
                 }
                 setTimeout(function () { $('#pia_minimize_' + options.id).click(); }, delay_val);
             }
