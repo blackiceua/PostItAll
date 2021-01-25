@@ -2047,18 +2047,85 @@ var delay = (function(){
                     }
                 }
                 t.saveOldPosition();
+                var getMinimizedPosition = function (options) {
+                    var minimizedPosition = {};
+                    var el = $('' + options.attachedTo.element);
+                    var elPosLeft = el.offset().left;
+                    var elPosTop = el.offset().top;
+                    var elPosHeight = el.outerHeight();
+                    var elPosWidth = el.outerWidth();
+                    switch(options.attachedTo.position) {
+                        case 'top left':
+                            minimizedPosition.left = (elPosLeft + 8) + 'px';
+                            minimizedPosition.top = (elPosTop - 30) + 'px';
+                            break;
+
+                        case 'top':
+                            minimizedPosition.left = (elPosLeft + Math.ceil(elPosWidth / 2) - 10) + 'px';
+                            minimizedPosition.top = (elPosTop - 30) + 'px';
+                            break;
+
+                        case 'top right':
+                            minimizedPosition.left = (elPosLeft + elPosWidth - 22) + 'px';
+                            minimizedPosition.top = (elPosTop - 30) + 'px';
+                            break;
+
+                        case 'right top':
+                            minimizedPosition.left = (elPosLeft + elPosWidth + 8) + 'px';
+                            minimizedPosition.top = (elPosTop) + 'px';
+                            break;
+
+                        case 'right':
+                            minimizedPosition.left = (elPosLeft + elPosWidth + 8) + 'px';
+                            minimizedPosition.top = (elPosTop + Math.ceil(elPosHeight / 2) - 14) + 'px';
+                            break;
+
+                        case 'right bottom':
+                            minimizedPosition.left = (elPosLeft + elPosWidth + 8) + 'px';
+                            minimizedPosition.top = (elPosTop + elPosHeight - 30) + 'px';
+                            break;
+
+                        case 'bottom left':
+                            minimizedPosition.left = (elPosLeft + 8) + 'px';
+                            minimizedPosition.top = (elPosTop + elPosHeight) + 'px';
+                            break;
+
+                        case 'bottom':
+                            minimizedPosition.left = (elPosLeft + Math.ceil(elPosWidth / 2) - 10) + 'px';
+                            minimizedPosition.top = (elPosTop + elPosHeight) + 'px';
+                            break;
+
+                        case 'bottom right':
+                            minimizedPosition.left = (elPosLeft + elPosWidth - 22) + 'px';
+                            minimizedPosition.top = (elPosTop + elPosHeight) + 'px';
+                            break;
+
+                        case 'left top':
+                            minimizedPosition.left = (elPosLeft - 22) + 'px';
+                            minimizedPosition.top = (elPosTop) + 'px';
+                            break;
+
+                        case 'left':
+                            minimizedPosition.left = (elPosLeft - 22) + 'px';
+                            minimizedPosition.top = (elPosTop + Math.ceil(elPosHeight / 2) - 14) + 'px';
+                            break;
+
+                        case 'left bottom':
+                            minimizedPosition.left = (elPosLeft - 22) + 'px';
+                            minimizedPosition.top = (elPosTop + elPosHeight - 30) + 'px';
+                            break;
+                        }
+                    return minimizedPosition;
+                }
                 //Minimize
                 var hideNote = function() {
                     if (options.attachedTo.minimizeFixed) {
-                        $($.fn.postitall.globals.prefix + index).animate({
-                            'width': '12px',
-                            'height': '20px',
-                            'left': options.oldPosition.leftMinimized,
-                        }, 500, function() {
+                        var animate = $.extend({'width': '12px', 'height': '20px'}, getMinimizedPosition(options));
+                        $($.fn.postitall.globals.prefix + index).animate(animate, 500, function() {
                             t.hideArrow(index, options);
                             t.switchTrasparentNoteOn();
                         }).addClass('minimizedAttached')
-                          .css({position:'absolute'});
+                            .css({position:'absolute'});
                     }
                     else {
                         $($.fn.postitall.globals.prefix + index).animate({
